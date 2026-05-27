@@ -113,6 +113,20 @@ describe('LandingPage', () => {
     expect(input.value).toBe('octocat');
   });
 
+  it('disables the Watch Dashboard link when username is empty', () => {
+    render(<LandingPage />);
+    const input = screen.getByPlaceholderText('Enter GitHub Username') as HTMLInputElement;
+    const dashboardLink = screen.getByRole('link', { name: 'Watch Dashboard' });
+
+    expect(dashboardLink.getAttribute('aria-disabled')).toBe('true');
+    expect(dashboardLink.getAttribute('href')).toBe('/');
+
+    fireEvent.change(input, { target: { value: 'octocat' } });
+
+    expect(dashboardLink.getAttribute('aria-disabled')).toBe('false');
+    expect(dashboardLink.getAttribute('href')).toBe('/dashboard/octocat');
+  });
+
   it('renders an empty state before a username is entered', () => {
     render(<LandingPage />);
 
