@@ -3,7 +3,13 @@ import { sanitizeHexColor, sanitizeSpeed, sanitizeRadius, sanitizeFont } from '.
 
 export const streakParamsSchema = z.object({
   // Required — missing user surfaces as "Missing" to match existing tests
-  user: z.string({ error: 'Missing user parameter' }).min(1, { message: 'Missing user parameter' }),
+  user: z
+    .string({ error: 'Missing user parameter' })
+    .min(1, { message: 'Missing user parameter' })
+    .max(39, { message: 'GitHub username cannot exceed 39 characters' })
+    .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*$/, {
+      message: 'Invalid GitHub username',
+    }),
 
   theme: z.string().default('dark'),
   bg: z
@@ -75,6 +81,15 @@ export const streakParamsSchema = z.object({
   delta_format: z.enum(['percent', 'absolute', 'both']).catch('percent').default('percent'),
   width: z.string().optional(),
   height: z.string().optional(),
+  grace: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return 1;
+      const parsed = Number(val);
+      return isNaN(parsed) ? 1 : Math.max(0, Math.min(parsed, 7));
+    })
+    .default(1),
 });
 
 export const githubParamsSchema = z.object({

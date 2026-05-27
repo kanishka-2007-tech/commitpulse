@@ -113,6 +113,7 @@ describe('LandingPage', () => {
     expect(input.value).toBe('octocat');
   });
 
+
   it('disables the Watch Dashboard link when username is empty', () => {
     render(<LandingPage />);
     const input = screen.getByPlaceholderText('Enter GitHub Username') as HTMLInputElement;
