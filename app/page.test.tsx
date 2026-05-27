@@ -119,11 +119,13 @@ describe('LandingPage', () => {
     const dashboardLink = screen.getByRole('link', { name: 'Watch Dashboard' });
 
     expect(dashboardLink.getAttribute('aria-disabled')).toBe('true');
-    expect(dashboardLink.getAttribute('href')).toBe('/');
+    expect(dashboardLink.getAttribute('tabindex')).toBe('-1');
+    expect(dashboardLink.getAttribute('href')).toBe('#');
 
     fireEvent.change(input, { target: { value: 'octocat' } });
 
-    expect(dashboardLink.getAttribute('aria-disabled')).toBe('false');
+    expect(dashboardLink.getAttribute('aria-disabled')).toBeNull();
+    expect(dashboardLink.getAttribute('tabindex')).toBeNull();
     expect(dashboardLink.getAttribute('href')).toBe('/dashboard/octocat');
   });
 

@@ -254,8 +254,9 @@ export default function LandingPage() {
                   </AnimatePresence>
                 </button>
                 <Link
-                  href={hasUsername ? `/dashboard/${trimmedUsername}` : '/'}
-                  aria-disabled={!hasUsername}
+                  href={hasUsername ? `/dashboard/${trimmedUsername}` : '#'}
+                  aria-disabled={hasUsername ? undefined : true}
+                  tabIndex={hasUsername ? undefined : -1}
                   onClick={(e) => {
                     if (!hasUsername) {
                       e.preventDefault();
@@ -267,7 +268,7 @@ export default function LandingPage() {
                   className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-xl border px-6 py-3.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
                     hasUsername
                       ? 'border-black/10 bg-gray-100 text-black hover:bg-gray-200 dark:border-[rgba(255,255,255,0.15)] dark:bg-white/[0.04] dark:text-white dark:hover:bg-white/10'
-                      : 'border-black/10 bg-gray-100 text-gray-500 dark:border-[rgba(255,255,255,0.08)] dark:bg-white/[0.02] dark:text-white/35'
+                      : 'pointer-events-none cursor-not-allowed border-black/10 bg-gray-100 text-gray-500 dark:border-[rgba(255,255,255,0.08)] dark:bg-white/[0.02] dark:text-white/35'
                   }`}
                 >
                   Watch Dashboard
