@@ -135,8 +135,32 @@ describe('fetchGitHubContributions', () => {
       })
     );
 
-    // Only the first error surfaces — the source always reads errors[0].
+    // Preserve the existing behavior of surfacing the first GitHub error message.
     await expect(fetchGitHubContributions('octocat')).rejects.toThrow('Bad credentials');
+  });
+
+  it('throws a stable fallback when GraphQL returns an empty errors array', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({
+        errors: [],
+      })
+    );
+
+    await expect(fetchGitHubContributions('octocat')).rejects.toThrow(
+      'GitHub GraphQL API returned an unknown error'
+    );
+  });
+
+  it('throws a stable fallback when the first GraphQL error has no message', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({
+        errors: [{}],
+      })
+    );
+
+    await expect(fetchGitHubContributions('octocat')).rejects.toThrow(
+      'GitHub GraphQL API returned an unknown error'
+    );
   });
 
   it('throws a descriptive "user not found" error when the username does not exist on GitHub', async () => {
@@ -328,6 +352,61 @@ describe('getFullDashboardData', () => {
     expect(totalClockCommits).toBe(8); // 3 + 0 + 5 from mockCalendar
   });
 
+  it('maps contribution counts to correct intensity levels', async () => {
+    const intensityCalendar: ContributionCalendar = {
+      totalContributions: 30,
+      weeks: [
+        {
+          contributionDays: [
+            { contributionCount: 0, date: '2024-06-10' },
+            { contributionCount: 2, date: '2024-06-11' },
+            { contributionCount: 5, date: '2024-06-12' },
+            { contributionCount: 8, date: '2024-06-13' },
+            { contributionCount: 15, date: '2024-06-14' },
+          ],
+        },
+      ],
+    };
+
+    vi.mocked(fetch).mockImplementation(async (url: any) => {
+      if (typeof url === 'string' && url.includes('/users/octocat/repos')) {
+        return mockResponse([]);
+      }
+
+      if (typeof url === 'string' && url.includes('/users/octocat')) {
+        return mockResponse({
+          login: 'octocat',
+          name: 'The Octocat',
+          avatar_url: 'avatar.png',
+          public_repos: 0,
+          followers: 0,
+          following: 0,
+          created_at: '2020-01-01T00:00:00Z',
+        });
+      }
+
+      return mockResponse({
+        data: {
+          user: {
+            contributionsCollection: {
+              contributionCalendar: intensityCalendar,
+            },
+          },
+        },
+      });
+    });
+
+    const result = await getFullDashboardData('octocat');
+
+    const activities = result.activity;
+
+    expect(activities[0].intensity).toBe(0);
+    expect(activities[1].intensity).toBe(1);
+    expect(activities[2].intensity).toBe(2);
+    expect(activities[3].intensity).toBe(3);
+    expect(activities[4].intensity).toBe(4);
+  });
+
   it('throws if profile fetch fails', async () => {
     vi.mocked(fetch).mockImplementation(async (url: any) => {
       if (typeof url === 'string' && url.includes('/users/octocat/repos')) {
@@ -360,6 +439,72 @@ describe('getFullDashboardData', () => {
     await expect(getFullDashboardData('octocat')).rejects.toThrow(
       '[GitHub API] Failed to fetch profile for user "octocat"'
     );
+  });
+
+  it('formats joinedDate as MMM YYYY', async () => {
+    // Verifies that created_at from the REST API is formatted with toLocaleDateString('en-US')
+    // into a stable 'Jan 2020' shape regardless of the runtime environment's system locale.
+    vi.mocked(fetch).mockImplementation(async (url: any) => {
+      if (typeof url === 'string' && url.includes('/users/testuser/repos')) {
+        return mockResponse([]);
+      }
+      if (typeof url === 'string' && url.includes('/users/testuser')) {
+        return mockResponse({
+          login: 'testuser',
+          name: 'Test User',
+          avatar_url: 'https://example.com/avatar.png',
+          bio: null,
+          location: null,
+          public_repos: 0,
+          followers: 0,
+          following: 0,
+          created_at: '2020-01-15T00:00:00Z',
+        });
+      }
+      return mockResponse({
+        data: { user: { contributionsCollection: { contributionCalendar: mockCalendar } } },
+      });
+    });
+
+    const result = await getFullDashboardData('testuser');
+
+    // 'en-US' locale with { month: 'short', year: 'numeric' } always produces 'Jan 2020'
+    expect(result.profile.joinedDate).toMatch(/^[A-Za-z]+ \d{4}$/);
+  });
+
+  it('maps calculateStreak output correctly to stats', async () => {
+    // Verifies that getFullDashboardData correctly pipes the contribution calendar
+    // through calculateStreak and maps the result onto the returned stats object.
+    vi.mocked(fetch).mockImplementation(async (url: any) => {
+      if (typeof url === 'string' && url.includes('/users/testuser/repos')) {
+        return mockResponse([]);
+      }
+      if (typeof url === 'string' && url.includes('/users/testuser')) {
+        return mockResponse({
+          login: 'testuser',
+          name: 'Test User',
+          avatar_url: 'https://example.com/avatar.png',
+          bio: null,
+          location: null,
+          public_repos: 0,
+          followers: 0,
+          following: 0,
+          created_at: '2020-01-15T00:00:00Z',
+        });
+      }
+      return mockResponse({
+        data: { user: { contributionsCollection: { contributionCalendar: mockCalendar } } },
+      });
+    });
+
+    const result = await getFullDashboardData('testuser');
+
+    // totalContributions must be passed through unchanged from the calendar
+    expect(result.stats.totalContributions).toBe(mockCalendar.totalContributions);
+    // streak values are non-negative by definition
+    expect(result.stats.currentStreak).toBeGreaterThanOrEqual(0);
+    // peak (longestStreak) can never be less than the current streak
+    expect(result.stats.peakStreak).toBeGreaterThanOrEqual(result.stats.currentStreak);
   });
 });
 
@@ -485,6 +630,38 @@ describe('GitHub API cache behavior', () => {
 
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+
+  it('handles a new account with no public repos correctly', async () => {
+    vi.mocked(fetch).mockImplementation(async (url: any) => {
+      if (typeof url === 'string' && url.includes('/users/octocat/repos')) {
+        return mockResponse([]);
+      }
+      if (typeof url === 'string' && url.includes('/users/octocat')) {
+        return mockResponse({
+          login: 'octocat',
+          name: 'The Octocat',
+          avatar_url: 'avatar.png',
+          public_repos: 0,
+          followers: 0,
+          following: 0,
+          created_at: '2024-01-01T00:00:00Z',
+          bio: null,
+          location: null,
+        });
+      }
+      return mockResponse({
+        data: {
+          user: { contributionsCollection: { contributionCalendar: mockCalendar } },
+        },
+      });
+    });
+
+    const result = await getFullDashboardData('octocat');
+
+    expect(result.languages).toEqual([]);
+    expect(result.profile.stats.stars).toBe(0);
+    expect(result.profile.developerScore).toBeGreaterThanOrEqual(0);
+  });
 });
 describe('generateAchievements', () => {
   it('marks contribution milestones correctly', () => {
@@ -505,6 +682,16 @@ describe('generateAchievements', () => {
     expect(unlocked.some((a) => a.title === '30 Day Streak')).toBe(true);
 
     expect(unlocked.some((a) => a.title === '100 Day Streak')).toBe(false);
+  });
+
+  it('caps progress between 0 and 100 for extreme values', () => {
+    const achievements = generateAchievements(999999, 999999);
+
+    for (const item of achievements) {
+      expect(Number.isFinite(item.progress)).toBe(true);
+      expect(item.progress).toBeGreaterThanOrEqual(0);
+      expect(item.progress).toBeLessThanOrEqual(100);
+    }
   });
 });
 
