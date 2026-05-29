@@ -78,6 +78,24 @@ describe('GET /api/streak', () => {
 
       expect(fetchGitHubContributions).not.toHaveBeenCalled();
     });
+    it('should return 200 OK and valid SVG when the optional org query parameter is provided', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', org: 'vercel' }));
+
+      expect(response.status).toBe(200);
+
+      const textOutput = await response.text();
+      expect(textOutput).toContain('<svg');
+    });
+
+    it('falls back to commits mode when an invalid mode is provided', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', mode: 'invalid' }));
+
+      expect(response.status).toBe(200);
+
+      const body = await response.text();
+
+      expect(body).toContain('<svg');
+    });
   });
 
   describe('successful response', () => {
