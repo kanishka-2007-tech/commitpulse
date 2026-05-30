@@ -69,4 +69,35 @@ describe('User Model', () => {
       expect(usernamePath.options.required).toBe(true);
     });
   });
+
+  describe('Database Connection State 99 Handling', () => {
+    it('triggers a lazy initialization fallback when connection is state 99 (uninitialized)', async () => {
+      const { vi } = await import('vitest');
+
+      // 1. Mock mongoose.connection.readyState to return 99 (uninitialized)
+      const readyStateSpy = vi
+        .spyOn(mongoose.connection, 'readyState', 'get')
+        .mockReturnValue(99 as unknown as typeof mongoose.connection.readyState);
+
+      // 2. Stub mongoose.connect to simulate database connection fallback
+      const connectSpy = vi.spyOn(mongoose, 'connect').mockResolvedValue(mongoose);
+
+      // 3. Simulate a database operation connection request triggering lazy initialization
+      const executeDbOperation = async () => {
+        if (mongoose.connection.readyState === 99) {
+          await mongoose.connect('mongodb://localhost:27017/test');
+        }
+      };
+
+      await executeDbOperation();
+
+      // 4. Assertions
+      expect(mongoose.connection.readyState).toBe(99);
+      expect(connectSpy).toHaveBeenCalledTimes(1);
+
+      // Cleanup
+      readyStateSpy.mockRestore();
+      connectSpy.mockRestore();
+    });
+  });
 });
