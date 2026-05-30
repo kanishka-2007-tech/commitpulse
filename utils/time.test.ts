@@ -63,6 +63,14 @@ describe('getSecondsUntilUTCMidnight', () => {
 
     expect(getSecondsUntilUTCMidnight()).toBe(64800); // 18 hours = 64800 s
   });
+
+  it('always returns an integer with sub-second precision input', () => {
+    vi.setSystemTime(new Date('2024-06-15T23:59:59.999Z'));
+
+    const result = getSecondsUntilUTCMidnight();
+    expect(Number.isInteger(result)).toBe(true);
+    expect(result).toBe(0);
+  });
 });
 
 it('returns positive seconds for every hour of day', () => {
@@ -143,6 +151,15 @@ describe('getSecondsUntilMidnightInTimezone', () => {
       expect(result).toBeGreaterThanOrEqual(0);
       expect(Number.isInteger(result)).toBe(true);
     }
+  });
+
+  it('always returns an integer with sub-second precision input', () => {
+    // 2024-06-16T03:59:59.999Z is 23:59:59.999 in Etc/GMT+4 (UTC-4)
+    vi.setSystemTime(new Date('2024-06-16T03:59:59.999Z'));
+
+    const result = getSecondsUntilMidnightInTimezone('Etc/GMT+4');
+    expect(Number.isInteger(result)).toBe(true);
+    expect(result).toBe(1);
   });
 
   it('handles extreme timezone Etc/GMT-14 (UTC+14)', () => {
