@@ -49,6 +49,12 @@ describe('SVG Sanitizer Utilities', () => {
       expect(sanitizeHexColor('"><script>', '000000')).toBe('000000');
     });
 
+    it('returns fallback for invalid hex names', () => {
+      expect(sanitizeHexColor('red', '000000')).toBe('000000');
+      expect(sanitizeHexColor('blue', '000000')).toBe('000000');
+      expect(sanitizeHexColor('green', '000000')).toBe('000000');
+    });
+
     it('returns fallback for null/undefined', () => {
       expect(sanitizeHexColor(null, '000000')).toBe('000000');
       expect(sanitizeHexColor(undefined, '000000')).toBe('000000');
