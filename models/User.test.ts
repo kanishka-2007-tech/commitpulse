@@ -171,34 +171,24 @@ describe('User Model', () => {
   });
 
   describe('Database Connection State 99 Handling', () => {
-    it('triggers lazy initialization exactly once and uses the correct connection URI', async () => {
+    it('attempts lazy initialization when connection state is uninitialized', async () => {
       const { vi } = await import('vitest');
 
-      // 1. Mock readyState to 99 (uninitialized — no connection ever attempted)
       const readyStateSpy = vi
         .spyOn(mongoose.connection, 'readyState', 'get')
         .mockReturnValue(99 as unknown as typeof mongoose.connection.readyState);
 
-      // 2. Stub mongoose.connect to capture what URI it was called with
       const connectSpy = vi.spyOn(mongoose, 'connect').mockResolvedValue(mongoose);
 
       const MONGO_URI = 'mongodb://localhost:27017/commitpulse';
 
-      // 3. Simulate the lazy init fallback — connects exactly once with correct URI
-      const lazyInit = async () => {
-        if (mongoose.connection.readyState === 99) {
-          await mongoose.connect(MONGO_URI);
-        }
-      };
+      if (mongoose.connection.readyState === 99) {
+        await mongoose.connect(MONGO_URI);
+      }
 
-      await lazyInit();
-
-      // 4. Assertions
-      expect(mongoose.connection.readyState).toBe(99);
       expect(connectSpy).toHaveBeenCalledTimes(1);
       expect(connectSpy).toHaveBeenCalledWith(MONGO_URI);
 
-      // 5. Cleanup
       readyStateSpy.mockRestore();
       connectSpy.mockRestore();
     });
