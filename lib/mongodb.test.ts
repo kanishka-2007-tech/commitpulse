@@ -137,6 +137,23 @@ describe('dbConnect', () => {
     expect(global.mongoose.conn).toBe(mockMongoose);
     expect(conn).toBe(mockMongoose);
   });
+  it('clears stale cache and reconnects when connection state is 3 (disconnecting)', async () => {
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
+
+    global.mongoose.conn = {} as typeof mongoose;
+    global.mongoose.promise = Promise.resolve({} as typeof mongoose);
+
+    mockMongooseConnection.readyState = 3;
+
+    const mockMongoose = { connection: 'mock' };
+    setConnectedMongoose(mockMongoose as unknown as typeof mongoose);
+
+    const conn = await dbConnect();
+
+    expect(mongoose.connect).toHaveBeenCalledTimes(1);
+    expect(global.mongoose.conn).toBe(mockMongoose);
+    expect(conn).toBe(mockMongoose);
+  });
 
   it('handles mongoose Connection State 3 (disconnecting) gracefully by throwing or clearing cache', async () => {
     process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
