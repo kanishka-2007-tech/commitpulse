@@ -277,7 +277,7 @@ describe('GET /api/streak', () => {
       expect(fetchGitHubContributions).not.toHaveBeenCalled();
     });
 
-   it('returns 400 when grace is below the minimum value', async () => {
+    it('returns 400 when grace is below the minimum value', async () => {
       const response = await GET(
         makeRequest({
           user: 'octocat',
