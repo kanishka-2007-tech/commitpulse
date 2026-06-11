@@ -523,6 +523,8 @@ export function displayName(profile: GitHubUserProfile): string {
  * DATA FETCHING
  * ========================================================================== */
 
+const FETCH_TIMEOUT_MS = 4000;
+
 export async function fetchGitHubContributions(
   username: string,
   options: FetchOptions = {}
@@ -537,16 +539,47 @@ export async function fetchGitHubContributions(
       : true;
   };
 
-  const load = () => fetchContributionsUncached(username, key, options);
+  const loadWithTimeout = async (): Promise<ExtendedContributionData> => {
+    const controller = new AbortController();
+    if (options.signal) {
+      if (options.signal.aborted) {
+        controller.abort();
+      } else {
+        options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      }
+    }
+
+    let timerId = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timerId = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`GitHub API request timed out after ${FETCH_TIMEOUT_MS / 1000}s`));
+      }, FETCH_TIMEOUT_MS);
+      if (timerId && typeof timerId.unref === 'function') {
+        timerId.unref();
+      }
+    });
+
+    try {
+      return await Promise.race([
+        fetchContributionsUncached(username, key, { ...options, signal: controller.signal }),
+        timeoutPromise,
+      ]);
+    } finally {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    }
+  };
 
   if (options.bypassCache || options.forceRefresh) {
     try {
-      return await load();
+      return await loadWithTimeout();
     } catch (err: unknown) {
       const staleData = await contributionsCache.get(key);
       if (staleData) {
         console.warn(
-          `[GitHub API] Fetch failed for "${username}", falling back to stale cache:`,
+          `[GitHub API] Fetch failed or timed out for "${username}", falling back to stale cache:`,
           err
         );
         return {
@@ -559,12 +592,12 @@ export async function fetchGitHubContributions(
   }
 
   try {
-    return await contributionsCache.getOrSet(key, load, LONG_CACHE_TTL, shouldFetch);
+    return await contributionsCache.getOrSet(key, loadWithTimeout, LONG_CACHE_TTL, shouldFetch);
   } catch (err: unknown) {
     const staleData = await contributionsCache.get(key);
     if (staleData) {
       console.warn(
-        `[GitHub API] Fetch failed for "${username}", falling work back to stale cache:`,
+        `[GitHub API] Fetch failed or timed out for "${username}", falling back to stale cache:`,
         err
       );
       return {
