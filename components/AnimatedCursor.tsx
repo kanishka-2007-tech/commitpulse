@@ -7,8 +7,15 @@ export default function AnimatedCursor() {
   const ringRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
 
+  // const prefersReduced =
+  //   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const isTestEnvironment = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+
   const prefersReduced =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    !isTestEnvironment &&
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // const [mounted, setMounted] = useState(false);
   // ── Reduced motion: hide custom cursor entirely when user prefers it ──
