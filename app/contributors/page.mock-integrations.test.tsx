@@ -1,6 +1,6 @@
 // app/contributors/page.mock-integrations.test.tsx
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
@@ -10,17 +10,50 @@ type ContributorsClientProps = {
   topContributors: unknown[];
 };
 
-const mockContributorsClient = vi.fn((_props?: ContributorsClientProps) => (
-  <div data-testid="contributors-client">Contributors Client</div>
-));
+const mockContributorsClient = vi.fn((props: ContributorsClientProps) => {
+  void props;
+
+  return <div data-testid="contributors-client">Contributors Client</div>;
+});
 
 vi.mock('./ContributorsClient', () => ({
   default: (props: ContributorsClientProps) => mockContributorsClient(props),
 }));
 
 describe('ContributorsPage Mock Integrations', () => {
+  let originalFetch: typeof fetch;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetModules();
+    originalFetch = global.fetch;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: () => null,
+      },
+      json: async () => [
+        {
+          id: 1,
+          login: 'test-contributor-1',
+          avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+          contributions: 42,
+          html_url: 'https://github.com/test-contributor-1',
+        },
+        {
+          id: 2,
+          login: 'test-contributor-2',
+          avatar_url: 'https://avatars.githubusercontent.com/u/2?v=4',
+          contributions: 10,
+          html_url: 'https://github.com/test-contributor-2',
+        },
+      ],
+    } as unknown as Response);
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.unstubAllGlobals();
   });
 
   it('renders successfully using mocked service data', async () => {
@@ -42,8 +75,9 @@ describe('ContributorsPage Mock Integrations', () => {
 
     expect(mockContributorsClient).toHaveBeenCalled();
 
+    expect(mockContributorsClient).toHaveBeenCalledTimes(1);
     const props = mockContributorsClient.mock.calls[0][0] as ContributorsClientProps;
-
+    expect(props.contributors).toBeDefined();
     expect(Array.isArray(props.contributors)).toBe(true);
   });
 
@@ -56,7 +90,7 @@ describe('ContributorsPage Mock Integrations', () => {
 
     const props = mockContributorsClient.mock.calls[0][0] as ContributorsClientProps;
 
-    expect(typeof props.totalContributions).toBe('number');
+    expect(props.totalContributions).toBeGreaterThanOrEqual(0);
   });
 
   it('passes top contributors collection to client component', async () => {
@@ -72,15 +106,16 @@ describe('ContributorsPage Mock Integrations', () => {
   });
 
   it('falls back to empty contributor data on failed endpoint responses', async () => {
-    const originalFetch = global.fetch;
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      headers: {
-        get: () => null,
-      },
-    } as unknown as Response);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: {
+          get: () => null,
+        },
+      } as unknown as Response)
+    );
 
     const { default: ContributorsPage } = await import('./page');
 
@@ -89,7 +124,5 @@ describe('ContributorsPage Mock Integrations', () => {
     render(page);
 
     expect(screen.getByTestId('contributors-client')).toBeInTheDocument();
-
-    global.fetch = originalFetch;
   });
 });
