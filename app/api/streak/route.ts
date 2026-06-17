@@ -546,8 +546,8 @@ export async function GET(request: Request) {
     const cacheControl = isRefreshRequested
       ? 'no-cache, no-store, must-revalidate'
       : isHistoricalYear
-        ? 'public, s-maxage=31536000, immutable'
-        : `public, s-maxage=${secondsToMidnight}, stale-while-revalidate=86400`;
+        ? 'public, max-age=31536000, s-maxage=31536000, immutable'
+        : `public, max-age=14400, s-maxage=${secondsToMidnight}, stale-while-revalidate=7200`;
 
     const etag = crypto.createHash('sha256').update(svg).digest('hex');
     const weakEtag = `W/"${etag}"`;
@@ -568,7 +568,7 @@ export async function GET(request: Request) {
 
     return new NextResponse(svg, {
       headers: {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': 'image/svg+xml; charset=utf-8',
         'Cache-Control': cacheControl,
         'Content-Security-Policy': SVG_CSP_HEADER,
         'X-CommitPulse-Grace-Applied': String(grace),
@@ -659,7 +659,7 @@ function buildErrorResponse(error: unknown, parseResult: ParseResult): NextRespo
     const svg = generateRateLimitSVG(errBg, errAccent, errText, errRadius, errSpeed, isCircuitOpen);
 
     const headers: Record<string, string> = {
-      'Content-Type': 'image/svg+xml',
+      'Content-Type': 'image/svg+xml; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Content-Security-Policy': SVG_CSP_HEADER,
     };
@@ -686,7 +686,7 @@ function buildErrorResponse(error: unknown, parseResult: ParseResult): NextRespo
     return new NextResponse(svg, {
       status: 404,
       headers: {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': 'image/svg+xml; charset=utf-8',
         'Cache-Control': 'no-cache',
         'Content-Security-Policy': SVG_CSP_HEADER,
       },
@@ -700,7 +700,7 @@ function buildErrorResponse(error: unknown, parseResult: ParseResult): NextRespo
     return new NextResponse(validationSvg, {
       status: 400,
       headers: {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': 'image/svg+xml; charset=utf-8',
         'Cache-Control': 'no-store',
         'Content-Security-Policy': SVG_CSP_HEADER,
       },
@@ -715,7 +715,7 @@ function buildErrorResponse(error: unknown, parseResult: ParseResult): NextRespo
   return new NextResponse(errorSvg, {
     status: 500,
     headers: {
-      'Content-Type': 'image/svg+xml',
+      'Content-Type': 'image/svg+xml; charset=utf-8',
       'Cache-Control': 'no-store',
       'Content-Security-Policy': SVG_CSP_HEADER,
     },
