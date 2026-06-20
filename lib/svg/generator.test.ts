@@ -374,8 +374,8 @@ describe('generateSVG', () => {
       calendarWithUnsafeDate
     );
 
-    expect(svg).toContain('<title>TODAY: 2024-06-12 &amp; &lt;bad&gt;: 3 contributions</title>');
-    expect(svg).not.toContain('<title>TODAY: 2024-06-12 & <bad>: 3 contributions</title>');
+    expect(svg).toContain('<title>TODAY: Jun 12: 3 commits</title>');
+    expect(svg).toContain('data-date="2024-06-12 &amp; &lt;bad&gt;"');
   });
 
   // =========================================================================
@@ -593,8 +593,8 @@ describe('generateSVG', () => {
 
       const svg = generateSVG(mockStats, autoParams, calendarWithUnsafeDate);
 
-      expect(svg).toContain('<title>TODAY: 2024-06-12 &amp; &lt;bad&gt;: 3 contributions</title>');
-      expect(svg).not.toContain('<title>TODAY: 2024-06-12 & <bad>: 3 contributions</title>');
+      expect(svg).toContain('<title>TODAY: Jun 12: 3 commits</title>');
+      expect(svg).toContain('data-date="2024-06-12 &amp; &lt;bad&gt;"');
     });
 
     it('supports dynamic Google Fonts for non-predefined fonts in auto-theme mode', () => {
