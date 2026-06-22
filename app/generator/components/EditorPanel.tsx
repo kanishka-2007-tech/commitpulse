@@ -51,6 +51,7 @@ export function EditorPanel({
   return (
     <form role="form" aria-label="Readme Configuration Editor" className="flex flex-col gap-4">
       <button
+        type="button"
         onClick={() => setIsImportModalOpen(true)}
         className="w-full group relative flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 shadow-sm transition-all overflow-hidden"
       >

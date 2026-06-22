@@ -61,11 +61,12 @@ describe('EditorPanel Theme Contrast', () => {
   it('renders GitHub import button', () => {
     render(<EditorPanel {...defaultProps} />);
 
-    expect(
-      screen.getByRole('button', {
-        name: /import from github/i,
-      })
-    ).toBeInTheDocument();
+    const button = screen.getByRole('button', {
+      name: /import from github/i,
+    });
+
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('type', 'button');
   });
 
   it('applies light theme contrast classes', () => {
