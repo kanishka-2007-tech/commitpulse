@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { Menu, X, Activity, Moon, Sun, Globe } from 'lucide-react';
 import { useGlowEffect } from '@/hooks/useGlowEffect';
@@ -92,7 +92,9 @@ function LanguageSelector() {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const { t } = useTranslation();
+  const lastScrollYRef = useRef(0);
 
   useKeyboardShortcuts();
 
@@ -126,6 +128,34 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    const threshold = 8;
+    const currentScrollY = window.scrollY;
+    lastScrollYRef.current = currentScrollY;
+
+    const handleScroll = () => {
+      const nextScrollY = window.scrollY;
+      const delta = nextScrollY - lastScrollYRef.current;
+
+      if (nextScrollY <= 0) {
+        setIsHidden(false);
+      } else if (delta > threshold && nextScrollY > 72) {
+        setIsHidden(true);
+        setOpen(false);
+      } else if (delta < -threshold) {
+        setIsHidden(false);
+      }
+
+      lastScrollYRef.current = nextScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const handleLogoClick = () => {
     setOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -141,7 +171,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6 w-full">
+    <header
+      className={`sticky top-0 z-50 px-4 pt-4 sm:px-6 w-full transform-gpu transition-[transform,opacity] duration-300 ease-out ${
+        isHidden ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      }`}
+    >
       <div className="mx-auto max-w-6xl">
         <div
           ref={shellRef}
