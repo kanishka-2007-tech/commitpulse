@@ -203,7 +203,11 @@
       "active_streak": "{{streak}}-day active streak",
       "empty": "No recent activity to display",
       "code_activity": "Code activity recorded",
-      "no_code_changes": "No code changes recorded"
+      "no_code_changes": "No code changes recorded",
+      "total": "Total",
+      "peak": "Peak",
+      "daily_avg": "Daily Avg",
+      "active_days": "Active Days"
     },
     "insights": {
       "title": "AI Insights"

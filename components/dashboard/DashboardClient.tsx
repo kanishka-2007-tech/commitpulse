@@ -43,6 +43,7 @@ import CIAnalyticsClient from './CIAnalytics/CIAnalyticsClient';
 import DeploymentTracker from './DeploymentTracker';
 import ArchitectureVisualizer from './ArchitectureVisualizer';
 import GoalTracker from './GoalTracker';
+import ActivityHeatmapPro from './ActivityHeatmapPro';
 import DeveloperJourneyTimeline from './DeveloperJourneyTimeline';
 import RepositoryContributionExplorer from './RepositoryContributionExplorer';
 
@@ -716,6 +717,13 @@ export default function DashboardClient({
 
             <section>
               <ActivityLandscape data={initialData.activity} />
+            </section>
+
+            <section>
+              <ActivityHeatmapPro
+                activity={initialData.activity}
+                commitClock={initialData.commitClock}
+              />
             </section>
 
             <section>
