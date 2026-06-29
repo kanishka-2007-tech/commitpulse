@@ -13,8 +13,8 @@ import {
   GitBranch,
   HelpCircle,
 } from 'lucide-react';
-import { FaGithub, FaDiscord, FaTwitter, FaLinkedin } from 'react-icons/fa';
-
+import { FaGithub, FaDiscord, FaLinkedin } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 interface FooterLink {
   label: string;
   href: string;
@@ -74,7 +74,7 @@ const SOCIAL_ICON_MAP: Record<string, React.ReactNode> = {
   github: <FaGithub size={15} className="shrink-0" />,
   creator: <FaGithub size={15} className="shrink-0" />,
   discord: <FaDiscord size={15} className="shrink-0" />,
-  twitter: <FaTwitter size={15} className="shrink-0" />,
+  twitter: <FaXTwitter size={15} className="shrink-0" />,
   linkedin: <FaLinkedin size={15} className="shrink-0" />,
 };
 
