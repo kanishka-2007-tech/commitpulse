@@ -203,6 +203,19 @@ describe('GitHub Multi-Token Rotation & Fallback', () => {
   it('gracefully falls back to raw token on decryption failure', () => {
     const originalKey = process.env.GITHUB_TOKEN_ENCRYPTION_KEY;
     process.env.GITHUB_TOKEN_ENCRYPTION_KEY = 'a'.repeat(32);
+
+    try {
+      const rawToken = 'ghp_plaintextFallbackTokenAAAAAAAAAAAAAAAAAA';
+      process.env.GITHUB_PAT = rawToken;
+      delete process.env.GITHUB_TOKEN;
+
+      const tokens = getGitHubTokens();
+      expect(tokens).toEqual([rawToken]);
+    } finally {
+      process.env.GITHUB_TOKEN_ENCRYPTION_KEY = originalKey;
+    }
+  });
+
   it('discards an undecryptable token instead of forwarding a malformed credential', () => {
     const originalKey = process.env.ENCRYPTION_KEY;
     process.env.ENCRYPTION_KEY = 'abcdefghijklmnopqrstuvwxyz123456';
