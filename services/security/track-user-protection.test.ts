@@ -135,6 +135,28 @@ describe('TrackUserProtection', () => {
     });
   });
 
+  describe('Cooldown expiration', () => {
+    it('allows writes again after the cooldown period expires', () => {
+      vi.useFakeTimers();
+
+      try {
+        trackUserProtection.recordWrite('octocat');
+
+        expect(trackUserProtection.isWriteAllowed('octocat')).toBe(false);
+
+        vi.advanceTimersByTime(5 * 60 * 1000 - 1);
+
+        expect(trackUserProtection.isWriteAllowed('octocat')).toBe(false);
+
+        vi.advanceTimersByTime(1);
+
+        expect(trackUserProtection.isWriteAllowed('octocat')).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe('Singleton instance', () => {
     it('returns the same instance across multiple getInstance() calls', () => {
       const instanceA = TrackUserProtection.getInstance();
