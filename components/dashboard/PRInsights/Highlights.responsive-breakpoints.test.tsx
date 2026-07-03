@@ -35,17 +35,40 @@ global.IntersectionObserver = class {
   disconnect() {}
 } as unknown as typeof IntersectionObserver;
 
+// --- STRICT TYPESCRIPT INTERFACE ---
+interface HighlightsProps {
+  highlights: {
+    fastestMerged?: {
+      title: string;
+      url: string;
+      time: number;
+    };
+    largest?: {
+      title: string;
+      url: string;
+      additions: number;
+      deletions: number;
+    };
+    mostDiscussed?: {
+      title: string;
+      url: string;
+      comments: number;
+    };
+  };
+  isLoading?: boolean;
+}
+
 describe('Highlights Responsive Multi-device Columns & Mobile Viewport Layouts', () => {
   // Provide the exact data structure the component expects to prevent render crashes
-  const mockProps = {
+  const mockProps: HighlightsProps = {
     highlights: {
       fastestMerged: {
         title: 'Fix typo in documentation',
         url: 'https://github.com/test/repo/pull/1',
-        time: 2.5, // FIXED: Component expects a 'time' number so it can call .toFixed(1)
+        time: 2.5,
       },
-      largest: null,
-      mostDiscussed: null,
+      largest: undefined,
+      mostDiscussed: undefined,
     },
     isLoading: false,
   };
@@ -85,21 +108,21 @@ describe('Highlights Responsive Multi-device Columns & Mobile Viewport Layouts',
   it('1. mocks standard mobile-width media coordinates (e.g. 375px wide viewports)', () => {
     expect(window.innerWidth).toBe(375);
 
-    const { container } = render(<Highlights {...(mockProps as any)} />);
+    const { container } = render(<Highlights {...mockProps} />);
 
     expect(container).toBeDefined();
     expect(container.firstChild).not.toBeNull();
   });
 
   it('2. asserts that columns reflow into standard vertical flex lists', () => {
-    const { container } = render(<Highlights {...(mockProps as any)} />);
+    const { container } = render(<Highlights {...mockProps} />);
 
     expect(container).toBeTruthy();
     expect(typeof container.innerHTML).toBe('string');
   });
 
   it('3. verifies styling values are not absolute widths that cause horizontal scrollbars on smaller viewports', () => {
-    const { container } = render(<Highlights {...(mockProps as any)} />);
+    const { container } = render(<Highlights {...mockProps} />);
 
     const elementsWithStyle = container.querySelectorAll('[style]');
     let hasAbsoluteLargeWidth = false;
@@ -119,13 +142,13 @@ describe('Highlights Responsive Multi-device Columns & Mobile Viewport Layouts',
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 768 });
     window.dispatchEvent(new Event('resize'));
 
-    const { container } = render(<Highlights {...(mockProps as any)} />);
+    const { container } = render(<Highlights {...mockProps} />);
 
     expect(container).toBeDefined();
   });
 
   it('5. asserts mobile-specific toggle states respond cleanly', () => {
-    const { container } = render(<Highlights {...(mockProps as any)} />);
+    const { container } = render(<Highlights {...mockProps} />);
 
     expect(container).toBeDefined();
     expect(container.firstChild).toBeDefined();
