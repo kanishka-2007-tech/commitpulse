@@ -201,7 +201,7 @@ function generateParticles(
         </circle>
       `;
   }
-  return `<g class="heat-particles" pointer-events="none">${particles}</g>`;
+  return `<g class="heat-particles" pointer-events="none" focusable="false" aria-hidden="true">${particles}</g>`;
 }
 
 export function getInteractiveTowerCSS(accentColorExpr: string): string {
@@ -981,11 +981,11 @@ export function generateSVG(
 
   try {
     return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   ${renderHeader(safeUser, stats, sf, params, safeId)}
   ${renderStyle(selectedFont, statsFont, googleFontsImport, text, mainAccentHex, sf, bg, params.entrance || 'rise')}
   ${renderBackgroundRect(params.hideBackground ? 'transparent' : bgFill, radius)}
-  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;" transform="translate(0, ${Math.round((20 + yOffset) * sf)})">${towers}</g>
+  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;" transform="translate(0, ${Math.round((20 + yOffset) * sf)})" focusable="false">${towers}</g>
   ${renderIsometricLabels(calendar, params, text, sf)}
   ${renderFooter(stats, params, labels, safeUser, mainAccentHex, sf)}
   ${renderMilestoneBadges(stats, params, sf)}
@@ -1046,7 +1046,7 @@ function generateCompactSVG(stats: StreakStats, params: BadgeParams): string {
 
   try {
     return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   <title id="cp-title-${safeId}">CommitPulse Compact Streak for ${safeUser}</title>
   <desc id="cp-desc-${safeId}">${safeUser} has a current streak of ${stats.currentStreak} days.</desc>
   <style>
@@ -1170,7 +1170,7 @@ function generateAutoThemeSVG(
   </style>
 
   <rect width="${W}" height="${H}" rx="${radius}" ${params.hideBackground ? 'fill="transparent"' : 'class="cp-bg-fill"'} />
-  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;" transform="translate(0, ${s(20 + yOffset)})">
+  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;" transform="translate(0, ${s(20 + yOffset)})" focusable="false">
     ${towers}
   </g>
   ${renderIsometricLabels(calendar, params, 'var(--cp-text)', sf)}
@@ -1900,7 +1900,7 @@ export function generateHeatmapSVG(
       : '';
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   <title id="cp-title-${safeId}">CommitPulse Heatmap for ${safeUser}</title>
   <desc id="cp-desc-${safeId}">${safeUser} has ${stats.totalContributions} ${unit} and a longest streak of ${stats.longestStreak} days.</desc>
 
@@ -2031,7 +2031,7 @@ function generateAutoThemeHeatmapSVG(
       : '';
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   <title id="cp-title-${safeId}">CommitPulse Heatmap for ${safeUser}</title>
   <desc id="cp-desc-${safeId}">${safeUser} has ${stats.totalContributions} ${unit} and a longest streak of ${stats.longestStreak} days.</desc>
 
@@ -2402,7 +2402,7 @@ export function generateVersusSVG(
   const isWinner2 = stats2.totalContributions > stats1.totalContributions;
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   <title id="cp-title-${safeId}">CommitPulse Versus Stats: ${safeUser1} vs ${safeUser2}</title>
   <desc id="cp-desc-${safeId}">${safeUser1} has ${stats1.totalContributions} ${unit}. ${safeUser2} has ${stats2.totalContributions} ${unit}.</desc>
   ${renderDefs(sf, params)}
@@ -2478,7 +2478,7 @@ function generateAutoThemeVersusSVG(
   const isWinner2 = stats2.totalContributions > stats1.totalContributions;
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   <title id="cp-title-${safeId}">CommitPulse Versus Stats: ${safeUser1} vs ${safeUser2}</title>
   <desc id="cp-desc-${safeId}">${safeUser1} has ${stats1.totalContributions} ${unit}. ${safeUser2} has ${stats2.totalContributions} ${unit}.</desc>
   ${renderDefs(sf, params)}
@@ -3473,7 +3473,7 @@ export function generateLanguagesSVG(
 
   if (total === 0) {
     return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   ${renderHeader(safeUser, stats, sf, params, safeId)}
   ${renderStyle(selectedFont, statsFont, googleFontsImport, text, accent, sf, bg, params.entrance || 'rise')}
   <rect width="${W}" height="${H}" rx="${radius}" fill="${params.hideBackground ? 'transparent' : bg}" ${borderAttr} />
@@ -3537,12 +3537,12 @@ export function generateLanguagesSVG(
   });
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none" role="img" focusable="false" aria-labelledby="cp-title-${safeId}" aria-describedby="cp-desc-${safeId}">
   ${renderHeader(safeUser, stats, sf, params, safeId)}
   ${renderStyle(selectedFont, statsFont, googleFontsImport, text, accent, sf, bg, params.entrance || 'rise')}
   <rect width="${W}" height="${H}" rx="${radius}" fill="${params.hideBackground ? 'transparent' : bg}" ${borderAttr} />
   
-  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;">
+  <g id="cp-towers" style="transform-origin: center; transform-box: fill-box;" focusable="false">
     ${towersHtml}
   </g>
   
