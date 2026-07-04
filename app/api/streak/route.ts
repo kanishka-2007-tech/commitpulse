@@ -49,19 +49,36 @@ import { logger } from '@/lib/logger';
 const VALIDATION_CACHE_MAX = 256;
 const validationCache = new Map<string, ReturnType<typeof streakParamsSchema.safeParse>>();
 
+function normalizeCacheKey(params: URLSearchParams): string {
+  const entries: [string, string][] = [];
+  params.forEach((value, key) => {
+    entries.push([key, value]);
+  });
+  entries.sort(([a], [b]) => a.localeCompare(b));
+  return entries.map(([k, v]) => `${k}=${v}`).join('&');
+}
+
 function cachedValidation(
   key: string,
   parseFn: () => ReturnType<typeof streakParamsSchema.safeParse>
 ) {
   let cached = validationCache.get(key);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    validationCache.delete(key);
+    validationCache.set(key, cached);
+    return cached;
+  }
   cached = parseFn();
   if (validationCache.size >= VALIDATION_CACHE_MAX) {
-    const firstKey = validationCache.keys().next().value;
-    if (firstKey !== undefined) validationCache.delete(firstKey);
+    const lruKey = validationCache.keys().next().value;
+    if (lruKey !== undefined) validationCache.delete(lruKey);
   }
   validationCache.set(key, cached);
   return cached;
+}
+
+export function getValidationCacheForTests() {
+  return validationCache;
 }
 
 const SVG_CSP_HEADER =
@@ -97,7 +114,7 @@ function getMonthlyReferenceDate(year: string | undefined, timezone: string): Da
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const cacheKey = searchParams.toString();
+  const cacheKey = normalizeCacheKey(searchParams);
   const parseResult = cachedValidation(cacheKey, () =>
     streakParamsSchema.safeParse(coerceQueryParams(searchParams))
   );

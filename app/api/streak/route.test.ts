@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET } from './route';
+import { GET, getValidationCacheForTests } from './route';
 
 // We only mock the two things that reach outside this process:
 // the GitHub API call and the wall-clock time helper.
@@ -1969,6 +1969,60 @@ describe('GET /api/streak', () => {
 
       expect(bodyNormal.length).toBeGreaterThan(bodyMinified.length);
       expect(bodyNormal).toContain('  <rect');
+    });
+  });
+
+  describe('validation cache', () => {
+    it('normalizes cache keys by sorting query parameters alphabetically', async () => {
+      const cache = getValidationCacheForTests();
+      cache.clear();
+
+      const response1 = await GET(makeRequest({ user: 'octocat', theme: 'dark' }));
+      expect(response1.status).toBe(200);
+      expect(cache.size).toBe(1);
+
+      const response2 = await GET(makeRequest({ theme: 'dark', user: 'octocat' }));
+      expect(response2.status).toBe(200);
+      expect(cache.size).toBe(1);
+    });
+
+    it('uses LRU eviction so frequently accessed entries survive', async () => {
+      const cache = getValidationCacheForTests();
+      cache.clear();
+
+      const baseParams: Record<string, string> = { user: 'octocat' };
+
+      for (let i = 0; i < 256; i++) {
+        await GET(makeRequest({ ...baseParams, _k: String(i) }));
+      }
+      expect(cache.size).toBe(256);
+
+      await GET(makeRequest({ ...baseParams, _k: '0' }));
+
+      await GET(makeRequest({ ...baseParams, _k: 'overflow' }));
+      expect(cache.size).toBe(256);
+
+      const responseFirst = await GET(makeRequest({ ...baseParams, _k: '0' }));
+      expect(responseFirst.status).toBe(200);
+    });
+
+    it('evicts least recently used entries when cache is full', async () => {
+      const cache = getValidationCacheForTests();
+      cache.clear();
+
+      const baseParams: Record<string, string> = { user: 'octocat' };
+
+      for (let i = 0; i < 256; i++) {
+        await GET(makeRequest({ ...baseParams, _k: String(i) }));
+      }
+
+      for (let i = 256; i < 260; i++) {
+        await GET(makeRequest({ ...baseParams, _k: String(i) }));
+      }
+      expect(cache.size).toBe(256);
+
+      const responseOld = await GET(makeRequest({ ...baseParams, _k: '0' }));
+      expect(responseOld.status).toBe(200);
     });
   });
 });
