@@ -38,7 +38,7 @@ describe('TopMetricsRow Timezone Normalization & Calendar Data Boundary Alignmen
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.stubEnv('TZ', '');
+    vi.unstubAllEnvs();
   });
 
   // Test Case 1: Mock standard timezone settings (e.g., UTC, EST, IST, and JST).
@@ -120,8 +120,16 @@ describe('TopMetricsRow Timezone Normalization & Calendar Data Boundary Alignmen
     const pick = (parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) =>
       parts.find((p) => p.type === type)?.value;
 
-    expect([pick(usParts, 'month'), pick(usParts, 'day'), pick(usParts, 'year')]).toEqual(['7', '4', '2026']);
-    expect([pick(ukParts, 'day'), pick(ukParts, 'month'), pick(ukParts, 'year')]).toEqual(['04', '07', '2026']);
+    expect([pick(usParts, 'month'), pick(usParts, 'day'), pick(usParts, 'year')]).toEqual([
+      '7',
+      '4',
+      '2026',
+    ]);
+    expect([pick(ukParts, 'day'), pick(ukParts, 'month'), pick(ukParts, 'year')]).toEqual([
+      '04',
+      '07',
+      '2026',
+    ]);
 
     render(<TopMetricsRow data={mockData} />);
     expect(screen.getByText('Total PRs')).toBeInTheDocument();
