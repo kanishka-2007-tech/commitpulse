@@ -173,11 +173,6 @@ if (typeof globalThis.fetch !== 'undefined') {
   } as typeof fetch;
 
   globalThis.fetch = guardedFetch;
-
-  // Restore the guarded fetch after each test to prevent global fetch mock leaks
-  afterEach(() => {
-    globalThis.fetch = guardedFetch;
-  });
 }
 
 import enTranslations from './locales/en.json';
