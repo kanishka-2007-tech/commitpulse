@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import React from 'react';
-// FIXED: Using named import for SectionLabel instead of default import
 import { SectionLabel } from './SectionLabel';
 
 // --- MOCK TELEMETRY TRACKER ---
@@ -83,7 +82,8 @@ describe('SectionLabel Hydration Stability & Error Fallbacks', () => {
     // Ensure the boundary safely wraps the component without interfering with healthy rendering
     render(
       <TestErrorBoundary>
-        <SectionLabel title="Preferences">
+        <SectionLabel>
+          <div>Preferences</div>
           <FaultyChild shouldCrash={false} />
         </SectionLabel>
       </TestErrorBoundary>
@@ -96,7 +96,8 @@ describe('SectionLabel Hydration Stability & Error Fallbacks', () => {
   it('3. asserts that target modules render a clean error recovery UI instead of crashing the site', () => {
     render(
       <TestErrorBoundary>
-        <SectionLabel title="Preferences">
+        <SectionLabel>
+          <div>Preferences</div>
           <FaultyChild shouldCrash={true} />
         </SectionLabel>
       </TestErrorBoundary>
@@ -111,7 +112,8 @@ describe('SectionLabel Hydration Stability & Error Fallbacks', () => {
   it('4. verifies exceptions are logged to dev-telemetry trackers appropriately', () => {
     render(
       <TestErrorBoundary>
-        <SectionLabel title="Preferences">
+        <SectionLabel>
+          <div>Preferences</div>
           <FaultyChild shouldCrash={true} />
         </SectionLabel>
       </TestErrorBoundary>
@@ -128,7 +130,8 @@ describe('SectionLabel Hydration Stability & Error Fallbacks', () => {
 
     render(
       <TestErrorBoundary onReset={onResetMock}>
-        <SectionLabel title="Preferences">
+        <SectionLabel>
+          <div>Preferences</div>
           <FaultyChild shouldCrash={true} />
         </SectionLabel>
       </TestErrorBoundary>
