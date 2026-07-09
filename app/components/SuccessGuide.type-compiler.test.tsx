@@ -38,9 +38,6 @@ describe('SuccessGuide Type Compiler Validation', () => {
     void invalid;
   });
   it('enforces strict property configuration', () => {
-    expectTypeOf<SuccessGuideProps>().toMatchObjectType<{
-      markdown: string;
-      onDismiss: () => void;
-    }>();
+    expectTypeOf<keyof SuccessGuideProps>().toEqualTypeOf<'markdown' | 'onDismiss'>();
   });
 });
