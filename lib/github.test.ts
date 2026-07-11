@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   fetchGitHubContributions,
+  fetchCommitHourDistribution,
   fetchUserProfile,
   fetchUserRepos,
   fetchContributedRepos,
@@ -477,6 +478,114 @@ describe('fetchGitHubContributions', () => {
     const result = await fetchGitHubContributions('bypass-fallback-user', { bypassCache: true });
     expect(result.calendar.totalContributions).toBe(mockCalendar.totalContributions);
     expect(result.isOfflineFallback).toBe(true);
+  });
+});
+
+describe('fetchCommitHourDistribution', () => {
+  beforeEach(() => {
+    vi.spyOn(global, 'fetch');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('buckets the same commit into different hours for different timezones', async () => {
+    const isoTimestamp = '2024-06-10T21:00:00Z';
+
+    vi.mocked(fetch).mockImplementation(async (_url, options) => {
+      const body = JSON.parse(options?.body as string);
+
+      if (body.variables?.login) {
+        return mockResponse({
+          data: {
+            user: {
+              contributionsCollection: {
+                commitContributionsByRepository: [
+                  {
+                    repository: {
+                      owner: { login: 'octocat' },
+                      name: 'repo-1',
+                    },
+                    contributions: { totalCount: 1 },
+                  },
+                ],
+              },
+            },
+          },
+        });
+      }
+
+      return mockResponse({
+        data: {
+          repository: {
+            defaultBranchRef: {
+              target: {
+                history: {
+                  nodes: [{ committedDate: isoTimestamp }],
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    const utcResult = await fetchCommitHourDistribution('octocat');
+    expect(utcResult[21]).toBe(1);
+    expect(utcResult[2]).toBe(0);
+
+    clearGitHubApiCacheForTests();
+
+    const istResult = await fetchCommitHourDistribution('octocat', undefined, 'Asia/Kolkata');
+    expect(istResult[2]).toBe(1);
+    expect(istResult[21]).toBe(0);
+  });
+
+  it('falls back to UTC when the timezone string is invalid', async () => {
+    const isoTimestamp = '2024-06-10T21:00:00Z';
+
+    vi.mocked(fetch).mockImplementation(async (_url, options) => {
+      const body = JSON.parse(options?.body as string);
+
+      if (body.variables?.login) {
+        return mockResponse({
+          data: {
+            user: {
+              contributionsCollection: {
+                commitContributionsByRepository: [
+                  {
+                    repository: {
+                      owner: { login: 'octocat' },
+                      name: 'repo-1',
+                    },
+                    contributions: { totalCount: 1 },
+                  },
+                ],
+              },
+            },
+          },
+        });
+      }
+
+      return mockResponse({
+        data: {
+          repository: {
+            defaultBranchRef: {
+              target: {
+                history: {
+                  nodes: [{ committedDate: isoTimestamp }],
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    const result = await fetchCommitHourDistribution('octocat', undefined, 'Not/A_Real_Zone');
+    expect(result[21]).toBe(1);
+    expect(result[2]).toBe(0);
   });
 });
 

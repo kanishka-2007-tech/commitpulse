@@ -2654,9 +2654,32 @@ export async function getWrappedData(
 
 export async function fetchCommitHourDistribution(
   username: string,
-  token?: string
+  token?: string,
+  timezone: string = 'UTC'
 ): Promise<number[]> {
   const hourCounts = new Array(24).fill(0);
+
+  // Extracts the hour-of-day (0-23) for a commit timestamp in the given
+  // IANA timezone. Mirrors the Intl.DateTimeFormat pattern already used in
+  // utils/time.ts's getSecondsUntilMidnightInTimezone(), rather than
+  // Date.getHours()/getUTCHours() which ignore the requested timezone.
+  const getHourInTimezone = (isoDate: string, tz: string): number => {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: 'numeric',
+        hour12: false,
+        hourCycle: 'h23',
+      }).formatToParts(new Date(isoDate));
+      const hourPart = parts.find((p) => p.type === 'hour')?.value;
+      const hour = hourPart ? parseInt(hourPart, 10) % 24 : new Date(isoDate).getUTCHours();
+      return hour;
+    } catch {
+      // Invalid timezone string — fall back to UTC rather than throwing,
+      // consistent with how other views degrade on a bad ?tz= value.
+      return new Date(isoDate).getUTCHours();
+    }
+  };
 
   // Fetch top repos by contribution count
   const query = `
@@ -2743,7 +2766,7 @@ export async function fetchCommitHourDistribution(
       const nodes: { committedDate: string }[] =
         data?.data?.repository?.defaultBranchRef?.target?.history?.nodes ?? [];
       for (const node of nodes) {
-        const hour = new Date(node.committedDate).getUTCHours();
+        const hour = getHourInTimezone(node.committedDate, timezone);
         hourCounts[hour]++;
       }
     } catch {

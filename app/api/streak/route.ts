@@ -631,7 +631,9 @@ export async function GET(request: Request) {
       svg = generateActivityGraphSVG(stats, params, calendar);
     } else if (normalizedView === 'commit_clock') {
       const stats = calculateStreak(calendar, timezone, undefined, grace);
-      const hourCounts = await fetchCommitHourDistribution(user).catch(() => new Array(24).fill(0));
+      const hourCounts = await fetchCommitHourDistribution(user, undefined, timezone).catch(() =>
+        new Array(24).fill(0)
+      );
       svg = generateCommitClockSVG(hourCounts, stats, params);
     } else if (normalizedView === 'weekday') {
       // ← INSERT YOUR NEW BLOCK HERE
