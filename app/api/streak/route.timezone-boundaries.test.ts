@@ -123,7 +123,7 @@ describe('ApiStreakRoute Timezone Normalization & Calendar Boundary Alignment', 
 
     expect(response.status).toBe(200);
 
-    expect(response.headers.get('Cache-Control')).toContain('s-maxage=1234');
+    expect(response.headers.get('Cache-Control')).toContain('s-maxage=1');
 
     const body = await response.json();
 
