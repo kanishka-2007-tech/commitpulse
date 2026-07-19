@@ -1,5 +1,6 @@
 'use client';
 
+import { copyToClipboard } from '@/utils/clipboard';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export function CodeBlock({ code }: CodeBlockProps) {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(code);
+      await copyToClipboard(code);
       setCopied(true);
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
