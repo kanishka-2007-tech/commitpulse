@@ -305,7 +305,11 @@ export function SocialsSection({
                         {hasLink && (
                           <a
                             href={
-                              social.id === 'email' ? `mailto:${val.replace(/^mailto:/, '')}` : val
+                              social.id === 'email'
+                                ? `mailto:${val.replace(/^mailto:/i, '')}`
+                                : val.startsWith('http')
+                                  ? val
+                                  : `${social.baseUrl}${val}`
                             }
                             target="_blank"
                             rel="noopener noreferrer"

@@ -8,6 +8,7 @@ import { ReadmeInsightsPanel } from './components/ReadmeInsightsPanel';
 import { ReadmeHealthBreakdown } from './components/ReadmeHealthBreakdown';
 import { ReadmeInsight } from './components/ReadmeInsight';
 import { generateReadme, getEmptyReadme } from './utils/readmeGenerator';
+import { sanitizeSocialUrl } from './utils/urlSanitizer';
 import type { GeneratorState } from './types';
 import type { ImportedData } from './utils/githubMapper';
 
@@ -91,7 +92,7 @@ export function GeneratorClient() {
           onSocialLinkChange={(id, url) =>
             setState((s) => ({
               ...s,
-              socialLinks: { ...s.socialLinks, [id]: url },
+              socialLinks: { ...s.socialLinks, [id]: sanitizeSocialUrl(id, url) },
             }))
           }
           onGithubUsernameChange={(v) => setState((s) => ({ ...s, githubUsername: v }))}
