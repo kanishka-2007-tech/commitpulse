@@ -87,6 +87,19 @@ describe('GoalTracker Component', () => {
 
   beforeEach(() => {
     window.localStorage.clear();
+
+    // Stub fetch so the background server-sync resolves immediately with
+    // "no goals saved yet" (source: 'default'). This prevents the skeleton
+    // loading state from blocking assertions in tests that don't pre-populate
+    // localStorage — the component will immediately set serverSynced = true
+    // and render actual values instead of placeholders.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ goals: { monthly: 100, yearly: 1000 }, source: 'default' }),
+      })
+    );
   });
 
   it('renders title and defaults correctly when localStorage is empty', () => {

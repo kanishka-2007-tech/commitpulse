@@ -33,8 +33,20 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
     DEFAULT_GOALS
   );
 
-  // Track whether the server has returned a value yet (to show a loading hint
-  // only when localStorage had no prior value for this user).
+  // Detect synchronously at mount whether localStorage had a real stored value
+  // for this user. If it did, there's no "loading" state — we show values right
+  // away. The skeleton only appears for brand-new visitors with no local data.
+  const hadLocalStorageValue = useRef<() => boolean>(() => {
+    try {
+      const raw = localStorage.getItem(`commitpulse:goals:${username.toLowerCase()}`);
+      return raw !== null;
+    } catch {
+      return false;
+    }
+  });
+
+  // serverSynced tracks whether the background fetch has returned yet.
+  // Only relevant when there was no localStorage hit (hadLocalStorageValue = false).
   const [serverSynced, setServerSynced] = useState(false);
   const saveControllerRef = useRef<AbortController | null>(null);
 
