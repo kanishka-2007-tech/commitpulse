@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "test:visual": "vitest run tests/visual",
     "test:visual:update": "cross-env UPDATE_VISUAL_BASELINES=true vitest run tests/visual",
     "bench:svg": "tsx scripts/benchmark-svg.ts",
