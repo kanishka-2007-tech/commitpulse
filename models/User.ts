@@ -1,11 +1,17 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
+export interface IUserGoals {
+  monthly: number;
+  yearly: number;
+}
+
 export interface IUser extends Document {
   username: string;
   githubToken?: string;
   createdAt: Date;
   lastSeen?: Date;
   visitCount: number;
+  goals?: IUserGoals;
 }
 
 const UserSchema: Schema<IUser> = new Schema<IUser>({
@@ -32,6 +38,10 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
   visitCount: {
     type: Number,
     default: 0,
+  },
+  goals: {
+    monthly: { type: Number, min: 1 },
+    yearly: { type: Number, min: 1 },
   },
 });
 
