@@ -4014,3 +4014,41 @@ function _renderPeakAnnotation(
       font-family="${statsFont.replace(/"/g, "'")}" font-size="11" font-weight="700" fill="${labelFill}">${peakCount}${dateLabel ? `<tspan font-size="9.5" font-weight="400" fill="${dateFill}" opacity="0.7">${escapeXML(dateLabel)}</tspan>` : ''}</text>
   </g>`;
 }
+
+export interface ErrorSVGOptions {
+  bg?: string;
+  accent?: string;
+  text?: string;
+  radius?: number;
+  width?: number;
+  height?: number;
+}
+
+export function buildInlineErrorSVG(text: string, options?: ErrorSVGOptions): string {
+  const bg = options?.bg || '#0d1117';
+  const accent = options?.accent || '#00ffaa';
+  const textCol = options?.text || '#c9d1d9';
+  const radius = options?.radius ?? 8;
+  const width = options?.width ?? 400;
+  const height = options?.height ?? 150;
+
+  const MAX_LINE = 48;
+  const chars = Array.from(text);
+  const truncated =
+    chars.length > MAX_LINE * 2 ? chars.slice(0, MAX_LINE * 2 - 1).join('') + '…' : text;
+  const truncatedChars = Array.from(truncated);
+  const line1 = escapeXML(truncatedChars.slice(0, MAX_LINE).join(''));
+  const line2 =
+    truncatedChars.length > MAX_LINE ? escapeXML(truncatedChars.slice(MAX_LINE).join('')) : null;
+  const textY = line2 ? String(Math.round(height * 0.42)) : String(Math.round(height * 0.5));
+  const line2Y = String(Math.round(height * 0.61));
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="${width}" height="${height}" fill="${bg}" rx="${radius}" stroke="${accent}" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="${Math.round(width / 2)}" y="${textY}" text-anchor="middle" dominant-baseline="central" fill="${textCol}" font-family="sans-serif" font-size="13">${line1}</text>${
+    line2
+      ? `\n  <text x="${Math.round(width / 2)}" y="${line2Y}" text-anchor="middle" dominant-baseline="central" fill="${textCol}" font-family="sans-serif" font-size="13">${line2}</text>`
+      : ''
+  }
+</svg>`;
+}
