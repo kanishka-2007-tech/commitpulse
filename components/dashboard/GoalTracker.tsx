@@ -33,21 +33,6 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
     DEFAULT_GOALS
   );
 
-  // Detect synchronously at mount whether localStorage had a real stored value
-  // for this user. If it did, there's no "loading" state — we show values right
-  // away. The skeleton only appears for brand-new visitors with no local data.
-  const hadLocalStorageValue = useRef<() => boolean>(() => {
-    try {
-      const raw = localStorage.getItem(`commitpulse:goals:${username.toLowerCase()}`);
-      return raw !== null;
-    } catch {
-      return false;
-    }
-  });
-
-  // serverSynced tracks whether the background fetch has returned yet.
-  // Only relevant when there was no localStorage hit (hadLocalStorageValue = false).
-  const [serverSynced, setServerSynced] = useState(false);
   const saveControllerRef = useRef<AbortController | null>(null);
 
   // On mount, fetch goals from the server. The server value is authoritative
@@ -73,8 +58,6 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
         }
       } catch {
         // Network failure — silently keep local value
-      } finally {
-        if (!cancelled) setServerSynced(true);
       }
     }
 
@@ -151,13 +134,6 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
   const handleCancel = () => {
     setIsEditing(false);
   };
-
-  // Show a subtle loading state only when: (a) no localStorage value existed
-  // AND (b) the server hasn't responded yet. This avoids any flash for returning users.
-  const isInitialLoad =
-    !serverSynced &&
-    goals.monthly === DEFAULT_GOALS.monthly &&
-    goals.yearly === DEFAULT_GOALS.yearly;
 
   return (
     <motion.div
@@ -269,38 +245,28 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
                   {t('dashboard.goals.monthly') || 'Monthly Target'}
                 </span>
                 <span className="text-xs font-bold text-zinc-900 dark:text-white">
-                  {isInitialLoad ? (
-                    <span className="inline-block w-14 h-3 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-                  ) : (
-                    <>
-                      {monthlyContributions} / {goals.monthly}
-                    </>
-                  )}
+                  {monthlyContributions} / {goals.monthly}
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-zinc-900 overflow-hidden relative border border-black/5 dark:border-[rgba(255,255,255,0.03)]">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: isInitialLoad ? '0%' : `${monthlyPercent}%` }}
+                  animate={{ width: `${monthlyPercent}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
                   className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
                 />
               </div>
               <div className="flex justify-between items-center text-[10px]">
                 <span className="text-zinc-400 dark:text-[#777]">
-                  {isInitialLoad ? (
-                    <span className="inline-block w-24 h-2.5 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-                  ) : monthlyRemaining > 0 ? (
-                    (t('dashboard.goals.remaining') || '{{count}} commits remaining').replace(
-                      '{{count}}',
-                      monthlyRemaining.toString()
-                    )
-                  ) : (
-                    t('dashboard.goals.completed') || 'Goal Achieved! 🎉'
-                  )}
+                  {monthlyRemaining > 0
+                    ? (t('dashboard.goals.remaining') || '{{count}} commits remaining').replace(
+                        '{{count}}',
+                        monthlyRemaining.toString()
+                      )
+                    : t('dashboard.goals.completed') || 'Goal Achieved! 🎉'}
                 </span>
                 <span className="font-semibold text-emerald-500 dark:text-emerald-400">
-                  {isInitialLoad ? '—' : `${monthlyPercent}%`}
+                  {monthlyPercent}%
                 </span>
               </div>
             </div>
@@ -312,38 +278,28 @@ export default function GoalTracker({ username, activity = [] }: GoalTrackerProp
                   {t('dashboard.goals.yearly') || 'Yearly Target'}
                 </span>
                 <span className="text-xs font-bold text-zinc-900 dark:text-white">
-                  {isInitialLoad ? (
-                    <span className="inline-block w-14 h-3 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-                  ) : (
-                    <>
-                      {yearlyContributions} / {goals.yearly}
-                    </>
-                  )}
+                  {yearlyContributions} / {goals.yearly}
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-zinc-900 overflow-hidden relative border border-black/5 dark:border-[rgba(255,255,255,0.03)]">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: isInitialLoad ? '0%' : `${yearlyPercent}%` }}
+                  animate={{ width: `${yearlyPercent}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
                   className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
                 />
               </div>
               <div className="flex justify-between items-center text-[10px]">
                 <span className="text-zinc-400 dark:text-[#777]">
-                  {isInitialLoad ? (
-                    <span className="inline-block w-24 h-2.5 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-                  ) : yearlyRemaining > 0 ? (
-                    (t('dashboard.goals.remaining') || '{{count}} commits remaining').replace(
-                      '{{count}}',
-                      yearlyRemaining.toString()
-                    )
-                  ) : (
-                    t('dashboard.goals.completed') || 'Goal Achieved! 🎉'
-                  )}
+                  {yearlyRemaining > 0
+                    ? (t('dashboard.goals.remaining') || '{{count}} commits remaining').replace(
+                        '{{count}}',
+                        yearlyRemaining.toString()
+                      )
+                    : t('dashboard.goals.completed') || 'Goal Achieved! 🎉'}
                 </span>
                 <span className="font-semibold text-emerald-500 dark:text-emerald-400">
-                  {isInitialLoad ? '—' : `${yearlyPercent}%`}
+                  {yearlyPercent}%
                 </span>
               </div>
             </div>
