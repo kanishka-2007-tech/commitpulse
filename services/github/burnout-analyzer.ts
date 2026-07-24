@@ -2,6 +2,8 @@ import 'server-only';
 import { getGitHubTokens } from '@/lib/github';
 import { DistributedCache } from '@/lib/cache';
 import { isBotAuthor } from '@/lib/bot-filter';
+import dbConnect from '@/lib/mongodb';
+import { User } from '@/models/User';
 
 interface ContributorWeekData {
   w: number; // week timestamp (Unix)
@@ -38,6 +40,8 @@ export interface ContributorMetric {
   restWeeks: number; // last 12 weeks with 0 commits
   recentTrend: number[]; // commits per week for last 12 weeks
   recentAdditionsTrend: number[]; // additions per week for last 12 weeks
+  vacationDates?: string[];
+  isOnVacation?: boolean;
 }
 
 export interface BurnoutReport {
@@ -54,6 +58,8 @@ export interface BurnoutReport {
     previousAvgWeeklyCommits: number;
     weeksSilent: number;
     severity: 'Medium' | 'High';
+    vacationDates?: string[];
+    isOnVacation?: boolean;
   }[];
   recommendations: string[];
 }
@@ -162,6 +168,27 @@ async function analyzeRepositoryUncached(
     ? rawData.filter((c) => c.author && !isBotAuthor(c.author.login))
     : rawData;
 
+  // Query MongoDB for vacationDates per user
+  const userVacationMap: Record<string, string[]> = {};
+  try {
+    if (process.env.MONGODB_URI) {
+      await dbConnect();
+      const usernames = filteredRawData
+        .filter((c) => c.author?.login)
+        .map((c) => c.author.login.toLowerCase());
+      const users = await User.find({ username: { $in: usernames } })
+        .select('username vacationDates')
+        .lean();
+      for (const u of users) {
+        if (u.username && Array.isArray(u.vacationDates) && u.vacationDates.length > 0) {
+          userVacationMap[u.username.toLowerCase()] = u.vacationDates;
+        }
+      }
+    }
+  } catch {
+    // Ignore db fetch failures in offline / mock environments
+  }
+
   const totalCommits = filteredRawData.reduce((acc, c) => acc + (c.total || 0), 0);
   const totalContributors = filteredRawData.length;
 
@@ -246,6 +273,14 @@ async function analyzeRepositoryUncached(
     // Clamp score 0 - 100
     burnoutScore = Math.max(0, Math.min(100, Math.round(burnoutScore)));
 
+    const vacationDates = userVacationMap[username.toLowerCase()] || [];
+    const isOnVacation = vacationDates.length > 0;
+
+    // If user is on vacation, cap burnout risk score so they are not flagged as High risk
+    if (isOnVacation && burnoutScore > 70) {
+      burnoutScore = 35;
+    }
+
     const riskLevel = burnoutScore > 70 ? 'High' : burnoutScore > 35 ? 'Medium' : 'Low';
 
     contributors.push({
@@ -261,17 +296,17 @@ async function analyzeRepositoryUncached(
       restWeeks,
       recentTrend,
       recentAdditionsTrend,
+      vacationDates,
+      isOnVacation,
     });
 
-    // 2. Check for sudden inactivity
-    // User must have been active previously (average > 1 commit/week in the first 9 weeks of the 12-week block)
-    // And completely inactive in the last 3 weeks (0 commits)
+    // 2. Check for sudden inactivity (exclude contributors on vacation)
     const historyWeeks = recentTrend.slice(0, 9);
     const recent3Weeks = recentTrend.slice(-3);
     const avgHistory = historyWeeks.reduce((a: number, b: number) => a + b, 0) / 9;
     const commitsRecent3 = recent3Weeks.reduce((a: number, b: number) => a + b, 0);
 
-    if (avgHistory > 1 && commitsRecent3 === 0) {
+    if (avgHistory > 1 && commitsRecent3 === 0 && !isOnVacation) {
       let weeksSilent = 0;
       for (let i = recentTrend.length - 1; i >= 0; i--) {
         if (recentTrend[i] === 0) {
@@ -287,6 +322,8 @@ async function analyzeRepositoryUncached(
         previousAvgWeeklyCommits: Math.round(avgHistory * 10) / 10,
         weeksSilent,
         severity: avgHistory > 3 ? 'High' : 'Medium',
+        vacationDates,
+        isOnVacation,
       });
     }
   }

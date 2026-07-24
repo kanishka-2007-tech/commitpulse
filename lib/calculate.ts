@@ -159,9 +159,11 @@ export function calculateStreak(
   calendar?: ContributionCalendar | null,
   timezone: string = 'UTC',
   now: Date = new Date(),
-  grace: number = 1
+  grace: number = 1,
+  vacationDates: string[] = []
 ): StreakStats {
   const localTodayStr = getLocalTodayStr(now, timezone);
+  const vacationSet = new Set(vacationDates);
 
   if (!calendar) {
     return {
@@ -190,7 +192,7 @@ export function calculateStreak(
 
   // 1. Calculate Longest Streak (Standard loop)
   for (const day of uniqueDays) {
-    if (day && day.contributionCount > 0) {
+    if (day && (day.contributionCount > 0 || vacationSet.has(day.date))) {
       tempStreak++;
       if (tempStreak > longestStreak) longestStreak = tempStreak;
     } else {
@@ -240,25 +242,35 @@ export function calculateStreak(
   let consecutiveZeroDays = 0;
   if (todayIndex >= 0) {
     let idx = todayIndex - 1;
-    while (idx >= 0 && uniqueDays[idx].contributionCount === 0) {
+    while (
+      idx >= 0 &&
+      uniqueDays[idx].contributionCount === 0 &&
+      !vacationSet.has(uniqueDays[idx].date)
+    ) {
       consecutiveZeroDays++;
       idx--;
     }
   }
 
   const isActualToday = todayIndex >= 0 && uniqueDays[todayIndex].date === localTodayStr;
-  const todayHasCommits = todayIndex >= 0 && uniqueDays[todayIndex].contributionCount > 0;
+  const todayHasCommitsOrVacation =
+    todayIndex >= 0 &&
+    (uniqueDays[todayIndex].contributionCount > 0 || vacationSet.has(uniqueDays[todayIndex].date));
 
-  // If we are looking at the actual today, and it has no commits,
+  // If we are looking at the actual today, and it has no commits or vacation freeze,
   const evaluationIndex =
-    isActualToday && !todayHasCommits && consecutiveZeroDays < Math.max(1, grace)
+    isActualToday && !todayHasCommitsOrVacation && consecutiveZeroDays < Math.max(1, grace)
       ? todayIndex - 1
       : todayIndex;
 
   let isStreakAlive = false;
   for (let i = 0; i <= grace; i++) {
     const checkIndex = evaluationIndex - i;
-    if (checkIndex >= 0 && uniqueDays[checkIndex] && uniqueDays[checkIndex].contributionCount > 0) {
+    if (
+      checkIndex >= 0 &&
+      uniqueDays[checkIndex] &&
+      (uniqueDays[checkIndex].contributionCount > 0 || vacationSet.has(uniqueDays[checkIndex].date))
+    ) {
       isStreakAlive = true;
       break;
     }
@@ -270,11 +282,16 @@ export function calculateStreak(
       i >= evaluationIndex - grace &&
       i >= 0 &&
       uniqueDays[i] &&
-      uniqueDays[i].contributionCount === 0
+      uniqueDays[i].contributionCount === 0 &&
+      !vacationSet.has(uniqueDays[i].date)
     ) {
       i--;
     }
-    while (i >= 0 && uniqueDays[i] && uniqueDays[i].contributionCount > 0) {
+    while (
+      i >= 0 &&
+      uniqueDays[i] &&
+      (uniqueDays[i].contributionCount > 0 || vacationSet.has(uniqueDays[i].date))
+    ) {
       currentStreak++;
       i--;
     }

@@ -6,6 +6,7 @@ export interface IUser extends Document {
   createdAt: Date;
   lastSeen?: Date;
   visitCount: number;
+  vacationDates?: string[];
 }
 
 const UserSchema: Schema<IUser> = new Schema<IUser>({
@@ -32,6 +33,10 @@ const UserSchema: Schema<IUser> = new Schema<IUser>({
   visitCount: {
     type: Number,
     default: 0,
+  },
+  vacationDates: {
+    type: [String],
+    default: [],
   },
 });
 

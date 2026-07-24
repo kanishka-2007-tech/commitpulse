@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowDown,
   Filter,
+  PalmtreeIcon,
 } from 'lucide-react';
 
 interface ContributorMetric {
@@ -27,6 +28,8 @@ interface ContributorMetric {
   consecutiveHighWeeks: number;
   restWeeks: number;
   recentTrend: number[];
+  vacationDates?: string[];
+  isOnVacation?: boolean;
 }
 
 interface BurnoutRiskTableProps {
@@ -34,7 +37,12 @@ interface BurnoutRiskTableProps {
 }
 
 type SortColumn =
-  'username' | 'commitShare' | 'highIntensityWeeks' | 'restWeeks' | 'burnoutScore' | 'totalCommits';
+  | 'username'
+  | 'commitShare'
+  | 'highIntensityWeeks'
+  | 'restWeeks'
+  | 'burnoutScore'
+  | 'totalCommits';
 type SortDirection = 'asc' | 'desc';
 
 // Custom Pure SVG Sparkline for visual performance
@@ -361,15 +369,23 @@ export default function BurnoutRiskTable({ contributors }: BurnoutRiskTableProps
 
                 {/* Burnout Risk Badge */}
                 <td className="py-4 text-right pr-1">
-                  <div className="inline-flex items-center gap-1.5 pl-3 pr-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider leading-none">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getBadgeStyle(c.riskLevel)}`}
-                    >
-                      {c.riskLevel === 'High' && <ShieldAlert size={10} className="mr-0.5" />}
-                      {c.riskLevel === 'Medium' && <Flame size={10} className="mr-0.5" />}
-                      {c.riskLevel === 'Low' && <Sparkles size={10} className="mr-0.5" />}
-                      {c.burnoutScore}% {c.riskLevel}
-                    </span>
+                  <div className="inline-flex flex-col items-end gap-1">
+                    {c.isOnVacation && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border bg-sky-500/10 border-sky-500/20 text-sky-500 uppercase tracking-wider">
+                        <PalmtreeIcon size={10} className="mr-0.5" />
+                        On Vacation
+                      </span>
+                    )}
+                    <div className="inline-flex items-center gap-1.5 pl-3 pr-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider leading-none">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getBadgeStyle(c.riskLevel)}`}
+                      >
+                        {c.riskLevel === 'High' && <ShieldAlert size={10} className="mr-0.5" />}
+                        {c.riskLevel === 'Medium' && <Flame size={10} className="mr-0.5" />}
+                        {c.riskLevel === 'Low' && <Sparkles size={10} className="mr-0.5" />}
+                        {c.burnoutScore}% {c.riskLevel}
+                      </span>
+                    </div>
                   </div>
                 </td>
               </motion.tr>

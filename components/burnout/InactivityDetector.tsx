@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { UserMinus, Calendar, AlertCircle, Info } from 'lucide-react';
+import { UserMinus, Calendar, AlertCircle, Info, PalmtreeIcon } from 'lucide-react';
 import Image from 'next/image';
 
 interface InactivityAlert {
@@ -10,6 +10,8 @@ interface InactivityAlert {
   previousAvgWeeklyCommits: number;
   weeksSilent: number;
   severity: 'Medium' | 'High';
+  vacationDates?: string[];
+  isOnVacation?: boolean;
 }
 
 interface InactivityDetectorProps {
@@ -93,6 +95,12 @@ export default function InactivityDetector({ alerts }: InactivityDetectorProps) 
               >
                 @{alert.username}
               </a>
+              {alert.isOnVacation && (
+                <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-500 uppercase tracking-wider w-fit">
+                  <PalmtreeIcon size={10} />
+                  On Vacation
+                </span>
+              )}
               <span className="text-xs text-gray-500 dark:text-zinc-400 mt-1 flex items-center gap-1">
                 <Calendar size={12} className="shrink-0" />
                 Silent for{' '}
